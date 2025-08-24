@@ -10,6 +10,7 @@ using NzbDrone.Core.CustomFormats;
 using NzbDrone.Core.DecisionEngine.Specifications;
 using NzbDrone.Core.Languages;
 using NzbDrone.Core.MediaFiles;
+using NzbDrone.Core.MediaFiles.EpisodeImport;
 using NzbDrone.Core.Parser;
 using NzbDrone.Core.Parser.Model;
 using NzbDrone.Core.Profiles;
@@ -436,6 +437,103 @@ namespace NzbDrone.Core.Test.DecisionEngineTests
             GivenNewCustomFormats(new List<CustomFormat> { customFormat });
 
             Subject.IsSatisfiedBy(_parseResultSingle, new()).Accepted.Should().BeFalse();
+        }
+
+        [Test]
+        public void should_reject_season_pack_when_mode_is_all_and_not_all_are_upgradable()
+        {
+            GivenProfile(new QualityProfile
+            {
+                Cutoff = Quality.Bluray1080p.Id,
+                Items = Qualities.QualityFixture.GetDefaultQualities(),
+                UpgradeAllowed = true
+            });
+
+            Mocker.GetMock<IConfigService>()
+                  .SetupGet(s => s.AllowSeasonPackUpgrade)
+                  .Returns(SeasonPackUpgradeModeType.All);
+
+            _parseResultMulti.ParsedEpisodeInfo.FullSeason = true;
+            _parseResultMulti.Episodes = new List<Episode>
+                                         {
+                                             new Episode { EpisodeFile = new EpisodeFile { Quality = new QualityModel(Quality.SDTV) }, EpisodeFileId = 1 },
+                                             new Episode { EpisodeFile = new EpisodeFile { Quality = new QualityModel(Quality.Bluray1080p) }, EpisodeFileId = 2 }
+                                         };
+
+            _parseResultMulti.ParsedEpisodeInfo.Quality = new QualityModel(Quality.Bluray1080p);
+
+            var result = Subject.IsSatisfiedBy(_parseResultMulti, new());
+
+            result.Accepted.Should().BeFalse();
+        }
+
+        [Test]
+        public void should_have_correct_rejection_message_for_season_pack_not_meeting_threshold()
+        {
+            GivenProfile(new QualityProfile
+            {
+                Cutoff = Quality.Bluray1080p.Id,
+                Items = Qualities.QualityFixture.GetDefaultQualities(),
+                UpgradeAllowed = true
+            });
+
+            Mocker.GetMock<IConfigService>()
+                .SetupGet(s => s.AllowSeasonPackUpgrade)
+                .Returns(SeasonPackUpgradeModeType.Threshold);
+
+            Mocker.GetMock<IConfigService>()
+                .SetupGet(s => s.SeasonPackUpgradeThreshold)
+                .Returns(90);
+
+            _parseResultMulti.ParsedEpisodeInfo.FullSeason = true;
+            _parseResultMulti.Episodes = new List<Episode>
+                                         {
+                                             new Episode { EpisodeFile = new EpisodeFile { Quality = new QualityModel(Quality.SDTV) }, EpisodeFileId = 1 },
+                                             new Episode { EpisodeFile = new EpisodeFile { Quality = new QualityModel(Quality.SDTV) }, EpisodeFileId = 2 },
+                                             new Episode { EpisodeFile = new EpisodeFile { Quality = new QualityModel(Quality.SDTV) }, EpisodeFileId = 3 },
+                                             new Episode { EpisodeFile = new EpisodeFile { Quality = new QualityModel(Quality.SDTV) }, EpisodeFileId = 4 },
+                                             new Episode { EpisodeFile = new EpisodeFile { Quality = new QualityModel(Quality.SDTV) }, EpisodeFileId = 5 },
+                                             new Episode { EpisodeFile = new EpisodeFile { Quality = new QualityModel(Quality.SDTV) }, EpisodeFileId = 6 },
+                                             new Episode { EpisodeFile = new EpisodeFile { Quality = new QualityModel(Quality.SDTV) }, EpisodeFileId = 7 },
+                                             new Episode { EpisodeFile = new EpisodeFile { Quality = new QualityModel(Quality.Bluray1080p) }, EpisodeFileId = 8 },
+                                             new Episode { EpisodeFile = new EpisodeFile { Quality = new QualityModel(Quality.Bluray1080p) }, EpisodeFileId = 9 },
+                                             new Episode { EpisodeFile = null, EpisodeFileId = 0 }
+                                         };
+
+            _parseResultMulti.ParsedEpisodeInfo.Quality = new QualityModel(Quality.Bluray1080p);
+
+            var result = Subject.IsSatisfiedBy(_parseResultMulti, new());
+
+            result.Accepted.Should().BeFalse();
+            result.Message.Should().Be("Season pack does not meet the upgrade criteria. Upgradable: 8/10 (80%), Mode: Threshold, Threshold: 90%");
+        }
+
+        [Test]
+        public void should_accept_season_pack_when_mode_is_any_and_at_least_one_upgradable()
+        {
+            GivenProfile(new QualityProfile
+            {
+                Cutoff = Quality.Bluray1080p.Id,
+                Items = Qualities.QualityFixture.GetDefaultQualities(),
+                UpgradeAllowed = true
+            });
+
+            Mocker.GetMock<IConfigService>()
+                  .SetupGet(s => s.AllowSeasonPackUpgrade)
+                  .Returns(SeasonPackUpgradeModeType.Any);
+
+            _parseResultMulti.ParsedEpisodeInfo.FullSeason = true;
+            _parseResultMulti.Episodes = new List<Episode>
+                                         {
+                                             new Episode { EpisodeFile = new EpisodeFile { Quality = new QualityModel(Quality.SDTV) }, EpisodeFileId = 1 },
+                                             new Episode { EpisodeFile = new EpisodeFile { Quality = new QualityModel(Quality.Bluray1080p) }, EpisodeFileId = 2 }
+                                         };
+
+            _parseResultMulti.ParsedEpisodeInfo.Quality = new QualityModel(Quality.Bluray1080p);
+
+            var result = Subject.IsSatisfiedBy(_parseResultMulti, new());
+
+            result.Accepted.Should().BeTrue();
         }
     }
 }

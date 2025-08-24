@@ -11,6 +11,7 @@ import { FormInputButtonProps } from './FormInputButton';
 import FormInputHelpText from './FormInputHelpText';
 import KeyValueListInput, { KeyValueListInputProps } from './KeyValueListInput';
 import NumberInput, { NumberInputProps } from './NumberInput';
+import FloatInput, { FloatInputProps } from "./FloatInput";
 import OAuthInput, { OAuthInputProps } from './OAuthInput';
 import PasswordInput from './PasswordInput';
 import PathInput, { PathInputProps } from './PathInput';
@@ -65,7 +66,7 @@ const componentMap: Record<InputType, ElementType> = {
   downloadClientSelect: DownloadClientSelectInput,
   dynamicSelect: ProviderDataSelectInput,
   file: TextInput,
-  float: NumberInput,
+  float: FloatInput,
   indexerFlagsSelect: IndexerFlagsSelectInput,
   indexerSelect: IndexerSelectInput,
   keyValueList: KeyValueListInput,
@@ -110,7 +111,7 @@ type PickProps<V, C extends InputType> = C extends 'text'
   : C extends 'file'
   ? TextInputProps
   : C extends 'float'
-  ? TextInputProps
+  ? FloatInputProps
   : C extends 'indexerFlagsSelect'
   ? IndexerFlagsSelectInputProps
   : C extends 'indexerSelect'
@@ -332,5 +333,4 @@ function FormInputGroup<T, C extends InputType>(
     </div>
   );
 }
-
 export default FormInputGroup;

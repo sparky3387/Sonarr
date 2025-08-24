@@ -50,11 +50,14 @@ function NumberInput({
 
   const handleChange = useCallback(
     ({ name, value: newValue }: InputChanged<string>) => {
-      setValue(newValue);
+      const parsedValue = parseValue(newValue, isFloat, min, max);
+
+      setValue(parsedValue == null ? '' : parsedValue.toString());
 
       onChange({
         name,
-        value: parseValue(newValue, isFloat, min, max),
+        value: parsedValue,
+        isFloat,
       });
     },
     [isFloat, min, max, onChange, setValue]
@@ -75,6 +78,7 @@ function NumberInput({
     onChange({
       name,
       value: parsedValue,
+      isFloat,
     });
 
     isFocused.current = false;
