@@ -440,9 +440,9 @@ function MediaManagement() {
                           max={100}
                           helpTexts={[
                             translate('SeasonPackUpgradeThresholdHelpText'),
-                            translate('SeasonPackUpgradeThresholdHelpText8Episodes', { count: Math.ceil(100 / 8) }),
-                            translate('SeasonPackUpgradeThresholdHelpText12Episodes', { count: Math.ceil(100 / 12) }),
-                            translate('SeasonPackUpgradeThresholdHelpText24Episodes', { count: Math.ceil(100 / 24) }),
+                            translate('SeasonPackUpgradeThresholdHelpText8Episodes', { count: Math.ceil(100 * 2 / 8) }),
+                            translate('SeasonPackUpgradeThresholdHelpText12Episodes', { count: Math.ceil(100 * 3 / 12) }),
+                            translate('SeasonPackUpgradeThresholdHelpText24Episodes', { count: Math.ceil(100 * 6 / 24) }),
                           ]}
                           onChange={handleInputChange}
                           {...settings.seasonPackUpgradeThreshold}>

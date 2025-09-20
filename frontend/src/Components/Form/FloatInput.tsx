@@ -1,6 +1,5 @@
 import React from "react";
-import NumberInput from "./NumberInput";
-import { InputChanged } from 'typings/inputs';
+import NumberInput, { NumberInputChanged } from "./NumberInput";
 
 export interface FloatInputProps {
   name: string;
@@ -10,7 +9,7 @@ export interface FloatInputProps {
   step?: number;
   placeholder?: string;
   className?: string;
-  onChange: (change: InputChanged<number | null>) => void;
+  onChange: (change: NumberInputChanged) => void;
 }
 
 const FloatInput: React.FC<FloatInputProps> = (props) => {

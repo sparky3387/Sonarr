@@ -7,6 +7,7 @@ using NUnit.Framework;
 using NzbDrone.Common.Serializer;
 using NzbDrone.Core.Configuration;
 using NzbDrone.Core.CustomFormats;
+using NzbDrone.Core.DecisionEngine;
 using NzbDrone.Core.DecisionEngine.Specifications;
 using NzbDrone.Core.Languages;
 using NzbDrone.Core.MediaFiles;
@@ -505,7 +506,7 @@ namespace NzbDrone.Core.Test.DecisionEngineTests
             var result = Subject.IsSatisfiedBy(_parseResultMulti, new());
 
             result.Accepted.Should().BeFalse();
-            result.Message.Should().Be("Season pack does not meet the upgrade criteria. Upgradable: 8/10 (80%), Mode: Threshold, Threshold: 90%");
+            result.Reason.Should().Be(DownloadRejectionReason.DiskNotUpgrade);
         }
 
         [Test]

@@ -34,26 +34,6 @@ namespace NzbDrone.Core.DecisionEngine.Specifications
 
             if (subject.ParsedEpisodeInfo.FullSeason)
             {
-                var allowSeasonPackUpgrade = _configService.AllowSeasonPackUpgrade;
-
-                if (allowSeasonPackUpgrade == SeasonPackUpgradeModeType.All)
-                {
-                    foreach (var episode in subject.Episodes)
-                    {
-                        if (episode.EpisodeFileId == 0)
-                        {
-                            continue; // Missing is fine
-                        }
-
-                        var decision = CheckUpgradeSpecification(episode.EpisodeFile.Value, qualityProfile, subject);
-                        if (decision != null)
-                        {
-                            return decision;
-                        }
-                    }
-
-                    return DownloadSpecDecision.Accept();
-                }
 
                 var totalEpisodesInPack = subject.Episodes.Count;
 
@@ -109,20 +89,30 @@ namespace NzbDrone.Core.DecisionEngine.Specifications
                     }
                 }
 
+                var allowSeasonPackUpgrade = _configService.AllowSeasonPackUpgrade;
                 var seasonPackUpgradeThreshold = _configService.SeasonPackUpgradeThreshold;
-                _logger.Debug("Total upgradable episodes: {0} out of {1}. Season import setting: {2}, Threshold: {3}%", upgradedCount, totalEpisodesInPack, allowSeasonPackUpgrade, seasonPackUpgradeThreshold);
-
-                if (allowSeasonPackUpgrade == SeasonPackUpgradeModeType.Any && upgradedCount > 0)
-                {
-                    return DownloadSpecDecision.Accept();
-                }
-
-                if (allowSeasonPackUpgrade == SeasonPackUpgradeModeType.Threshold && (double)upgradedCount / totalEpisodesInPack * 100 >= seasonPackUpgradeThreshold)
-                {
-                    return DownloadSpecDecision.Accept();
-                }
+                _logger.Debug("Total upgradable episodes: {0} out of {1}. Season import setting: {2}, Threshold: {3}%",
+                    upgradedCount, totalEpisodesInPack, allowSeasonPackUpgrade, seasonPackUpgradeThreshold);
 
                 var upgradablePercentage = (double)upgradedCount / totalEpisodesInPack * 100;
+                if (allowSeasonPackUpgrade == SeasonPackUpgradeModeType.Any)
+                {
+                    if (upgradedCount > 0)
+                    {
+                        return DownloadSpecDecision.Accept();
+                    }
+                }
+                else
+                {
+                    var threshold = allowSeasonPackUpgrade == SeasonPackUpgradeModeType.All
+                        ? 100.0
+                        : _configService.SeasonPackUpgradeThreshold;
+                    if (upgradablePercentage >= threshold)
+                    {
+                        return DownloadSpecDecision.Accept();
+                    }
+                }
+
                 return DownloadSpecDecision.Reject(DownloadRejectionReason.DiskNotUpgrade, $"Season pack does not meet the upgrade criteria. Upgradable: {upgradedCount}/{totalEpisodesInPack} ({upgradablePercentage:0.##}%), Mode: {allowSeasonPackUpgrade}, Threshold: {seasonPackUpgradeThreshold}%");
             }
 
